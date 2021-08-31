@@ -1,0 +1,595 @@
+---
+title: "R Markdown para análisis demográfico"
+subtitle: 'Una introducción al uso de documentos interactivos'
+author: "César Andrés Cristancho-Fajardo. <br> Docente Investigador Universidad Externado de Colombia. <br> Experto en demografía DANE"
+date: "`r Sys.Date()+1`"
+output: 
+  ioslides_presentation: 
+    self_contained: true
+    smaller: no
+    widescreen: yes
+    logo: diar2.jpg
+---
+
+<style type="text/css">
+h2 { /* Header 2 */
+    font-size: 36px
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Introducción. R Markdown y demografía{data-background=#243445}
+
+## ¿Qué es R Markdown?
+Esta presentación fue realizada en R Markdown. Este formato de sintaxis **sirve para producir documentos HTML, PDF y MS Word**; y puede usarse para incluir resultados y gráficos de análisis estadísticos realizados en R. Más detalles en la dirección web <http://rmarkdown.rstudio.com>. 
+
+![](Proceso.png){width="75%"}
+
+
+## Programación literaria
+<div style="float: left; width: 25%;">
+![](rmarkdown.png){width="80%"}
+</div>
+
+<div style="float: right; width: 75%;">
+Este paradigma de programación se enfoca en la elaboración de reportes que contienen código (en vez de código documentado). Los documentos pueden incluir tablas, figuras, código y texto. El objetivo es **producir documentos legibles tanto para los humanos como para las maquinas**.
+</div>
+
+<div style="float: left; width: 75%;"><br>
+knitr es una herramienta para generación de informes dinámicos en R, que tiene como propósito  mejorar la **reproducibilidad de la investigación**. Cuando el documento es procesado, los fragmentos de código son ejecutados, y los gráficos u otros resultados son insertados.
+</div>
+<div style="float: right; width: 25%;"><br>
+![](knitr.png){width="80%"}
+</div>
+
+## Programación literaria
+<br><br>
+<div style="text-align: right"> 
+<p style="line-height: 1.3; font-family: times, serif; font-size:32pt; font-style:italic">
+    En lugar de imaginar que nuestra tarea principal es instruir a una computadora sobre lo que hacemos, concentrémonos en explicar a los seres humanos lo que queremos que haga una computadora (Donald Knuth).
+</p>
+</div>
+
+## Esquema de trabajo de información cuantitativa:
+Se requiere: i.) Generar cada gráfico o tabulado; ii.) Copiarlo; iii.) Pegarlo en el reporte que se esta trabajando; iii.) Si cambian los datos o hay que hacer un cambio de formato se deben **repetir los pasos anteriores**.
+
+![](workflow.png){width="75%"}
+
+## Esquema de trabajo de información cuantitativa:
+
+Al utilizar R Markdown se facilita la realización de cambios de formato, que pueden ser tediosos y consumen tiempo. **Ese tiempo se puede invertir mejor** en realizar nuevos análisis e interpretaciones de los datos.
+
+![](workflow.png){width="75%"}
+
+## Demografía y población. Definición y marco teórico
+
+```{r diag,echo=FALSE}
+library(DiagrammeR)
+DiagrammeR::grViz("digraph rmarkdown {
+graph [ compound = true, layout = dot, overlap = true,  rankdir = LR]
+node [shape = box, style = filled, fillcolor = OldLace,
+         fontname = Helvetica]
+
+pb [label = 'Población', fillcolor = MintCream, width = 2.4]
+dpb [label = 'Conjunto de individuos,\n constituidos de una manera estable\n (Livi Bacci, 2011)', fillcolor = MintCream, width = 2.4]
+d2pb [label = 'Conjunto de individuos, que coexisten\n en un momento dado  y delimitado\n de acuerdo con unos criterios variados\n de pertenencia (Pressat, 1987)', fillcolor = MintCream, width = 2.4]
+ 
+dm [label = 'Demografía', fillcolor = Lavender, width = 2.4]
+ddm [label = 'Estudio cientifico de poblaciones humanas, \n incluyendo tamaño, distribución,\n composición  y factores que determinan\n cambios (Siegel y Swanson, 2004)', fillcolor = Lavender, width = 2.4]
+
+d2dm [label = 'Tres dimensiones temporales:\n Edad, periodo y cohorte\n (Vinuesa y Recaño, 1997)', fillcolor = Lavender, width = 2.4]
+d3dm [label = 'Elementos de estadísticas humanas\n (Achillard, 1855)', fillcolor = Lavender, width = 2.4]
+
+td [label = 'Transición demográfica: conjunto\n de  transiciones interrelacionadas\n (Weeks, 2008) ', width = 2.4]
+tdmt [label = 'Transición de la mortalidad', width = 2.4]
+tdfe [label = 'Transición de la fecundidad', width = 2.4]
+tdmg [label = 'Transición de la migración', width = 2.4]
+tdee [label = 'Transición de la estructura\n por edades', width = 2.4]
+tdub [label = 'Transición urbana', width = 2.4]
+tdeh [label = 'Transición de la estructura\n de los hogares', width = 2.4]
+
+dm ->  pb ->  dm 
+dm -> td ->  dm 
+dm -> ddm -> pb  -> {dpb d2pb}
+dm -> {d2dm d3dm} 
+td -> {tdmt tdfe tdmg tdee tdub tdeh}
+
+
+}", width = 1000 )
+```
+
+## Usos del análisis exploratorio de datos (EDA) interactivo
+
+- Identificar estructuras que son difíciles de identificar mediante otras herramientas (Tukey y Fisherkeller, 1973).
+- Diagnosticar modelos y entender algoritmos (Wickham y otros, 2015).
+- Ayuda al proceso de dar sentido a la información sin preguntas previamente identificadas (Unwin y Hoffmann, 1999).
+- En el contexto de análisis poblacional puede ser útil para:
+
+
+<p style="line-height: 1.3;   background: AliceBlue; font-size:18pt;
+color: black">
+ Meta ODS 17.18  ...mejorar el apoyo a la creación de capacidad prestado a los  países en desarrollo, ..., para aumentar significativamente la disponibilidad  de datos oportunos, fiables y de gran calidad desglosados por ingresos, sexo,  edad, raza, origen étnico, estatus migratorio, discapacidad, ubicación 
+ geográfica y otras características pertinentes en los contextos nacionales
+</p>
+
+## El código para la diapositiva anterior
+
+````markdown
+## Usos del análisis exploratorio de datos (EDA) interactivo
+- Identificar estructuras que son difíciles de identificar mediante otras herramientas
+(Tukey y Fisherkeller, 1973).
+- Diagnosticar modelos y entender algoritmos (Wickham y otros, 2015).
+- Ayuda al proceso de dar sentido a la información sin preguntas previamente 
+identificadas (Unwin y Hoffmann, 1999).
+- En el contexto de análisis poblacional puede ser útil para:
+
+<p style="line-height: 1.3;   background: AliceBlue; font-size:18pt;
+color: black">
+ Meta ODS 17.18  ...mejorar el apoyo a la creación de capacidad prestado a 
+ los  países en desarrollo, ..., para aumentar significativamente la disponibilidad 
+ de datos oportunos, fiables y de gran calidad desglosados por ingresos, sexo, 
+ edad, raza, origen étnico, estatus migratorio, discapacidad, ubicación 
+ geográfica y otras características pertinentes en los contextos nacionales
+</p>
+````
+
+# Presentaciones con indicadores demográficos{data-background=#243445}
+
+## Población proyectada en Colombia
+
+```{r gr1, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 9, fig.height = 4.5, cache=TRUE}
+library(wpp2019)
+library(data.table)
+library(tidyverse)
+library(ggthemes)
+library(viridisLite)
+library(plotly)
+data(popproj)
+data(popprojHigh)
+data(popprojLow)
+dtpop <- setDT(popproj)   %>% .[name == 'Colombia',] %>% 
+  melt(., id.vars = c('country_code'  ,   'name')) %>%
+  .[, id := 'Media' ]
+dtpoph <- setDT(popprojHigh)  %>% .[name == 'Colombia',] %>% 
+  melt(., id.vars = c('country_code'  ,   'name')) %>%
+  .[, id := 'Alta' ]
+dtpopl <- setDT(popprojLow)  %>% .[name == 'Colombia',] %>% 
+  melt(., id.vars = c('country_code'  ,   'name')) %>%
+  .[, id := 'Baja' ]
+
+dtpopb <- rbind(dtpop, dtpoph, dtpopl) %>%
+  .[, Periodo := as.numeric(as.character(variable))] %>%
+  .[, Variante := factor(id, levels = c('Alta', 'Media', 'Baja') )] %>%
+  .[, Poblacion := as.numeric(as.character(value))]
+
+p <- ggplot() + 
+  geom_line(data= dtpopb, aes(Periodo, Poblacion ,  colour = Variante)) + 
+  theme_light() +
+  scale_colour_manual(name = 'Variante', values = c('black', 'blue', 'gray')) + scale_x_continuous(name = 'Año', breaks = seq(2025, 2100 , 10) ) +
+  scale_y_continuous(name = 'Población (en miles)', limits = c(25000,70000) ) 
+
+ggplotly(p)
+  
+
+
+```
+
+## El código tras la diapositiva
+
+```{r cdg, eval=FALSE, echo=TRUE}
+library(wpp2019); library(data.table); library(tidyverse)
+library(ggthemes); library(viridisLite); library(plotly)
+data(popproj); data(popprojHigh); data(popprojLow)
+dtpop <- setDT(popproj)   %>% .[name == 'Colombia',] %>% 
+  melt(., id.vars = c('country_code'  ,   'name')) %>%
+  .[, id := 'Media' ]
+dtpoph <- setDT(popprojHigh)  %>% .[name == 'Colombia',] %>% 
+  melt(., id.vars = c('country_code'  ,   'name')) %>%
+  .[, id := 'Alta' ]
+dtpopl <- setDT(popprojLow)  %>% .[name == 'Colombia',] %>% 
+  melt(., id.vars = c('country_code'  ,   'name')) %>%
+  .[, id := 'Baja' ]
+
+dtpopb <- rbind(dtpop, dtpoph, dtpopl) %>%
+  .[, Periodo := as.numeric(as.character(variable))] %>%
+  .[, Variante := factor(id, levels = c('Alta', 'Media', 'Baja') )] %>%
+  .[, Poblacion := as.numeric(as.character(value))]
+```
+
+## El código tras la diapositiva
+
+```{r cdgb, eval=FALSE, echo=TRUE}
+p <- ggplot() + 
+  geom_line(data= dtpopb, aes(Periodo, Poblacion ,  colour = Variante)) + 
+  theme_light() +
+  scale_colour_manual(name = 'Variante', values = c('black', 'blue', 'gray')) +   
+  scale_x_continuous(name = 'Año', breaks = seq(2025, 2100 , 10) ) +
+  scale_y_continuous(name = 'Población (en miles)', limits = c(25000,70000) ) 
+
+ggplotly(p)
+```
+
+
+
+## Pirámides poblacionales. Colombia. 1950 a 2020
+
+```{r gr2, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 9, fig.height = 5,cache = TRUE}
+library(wpp2019); library(data.table); library(tidyverse)
+library(ggthemes); library(viridis); library(plotly)
+data(popM)
+dtpopM <- setDT(popM)   %>% .[name == 'Colombia',] %>% 
+  melt(., id.vars = c('country_code'  ,   'name', 'age')) %>%
+  .[, Sex := 'Males' ]
+data(popF)
+dtpopF <- setDT(popF)   %>% .[name == 'Colombia',] %>% 
+  melt(., id.vars = c('country_code'  ,   'name', 'age')) %>%
+  .[, Sex := 'Females' ]
+
+dtpopMF <- rbind(dtpopF, dtpopM) %>%
+  .[, total := sum(value, na.rm = T) , keyby = .(variable)] %>%
+  .[, Percentage := value *100  / total  ] %>%
+  .[Sex == 'Males', Percentage := -Percentage  ]%>%
+  # dcast(., variable + age ~ Sexo, value.var = 'prp', sum) %>%
+  .[, Year := as.numeric(as.character(variable))  ] %>%
+  .[, Age := factor(age, levels = c("0-4","5-9", "10-14", "15-19", 
+                               "20-24", "25-29", "30-34", "35-39",
+                               "40-44", "45-49",  "50-54", "55-59",
+                               "60-64", "65-69", "70-74", "75-79",
+                               "80-84", "85-89", "90-94", "95-99", 
+                               "100+") )  ] %>%
+  .[, Sex := factor(Sex, levels = c( 'Males', 'Females') )  ]
+
+plot_ly(dtpopMF, size = I(14), alpha = 0.5) %>%
+add_segments(x = ~Percentage , xend = 0, y = ~Age, 
+             yend = ~age, frame = ~Year,
+             color = ~factor(Sex, levels = c(  'Females', 'Males') ),
+          colors = viridis_pal(option = "D")(3)[1:2]
+) %>%   layout(     xaxis = list(
+      ticktext = list("10%", "5%", "0", "5%", "10%"), 
+      tickvals = list(-10,-5,0,5,10), tickmode = "array"
+  )) %>% layout(legend = list( x = 0.8, y = 0.8))             
+
+
+```
+
+## Esperanza de vida al nacer de las mujeres. 21 países
+
+```{r gr3, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 9, fig.height = 4.5,cache = TRUE}
+library(wpp2019); library(data.table); library(tidyverse)
+library(ggthemes); library(viridis); library(plotly)
+library(DT)
+
+data(e0Fproj)
+dte0Fproj <- setDT(e0Fproj)   %>% 
+  .[name %in% c("Cuba", "Dominican Republic", "Haiti", 
+"Jamaica","Costa Rica",  "El Salvador", "Guatemala", "Honduras", 
+"Mexico", "Nicaragua", "Panama", "Argentina", 
+"Bolivia (Plurinational State of)", "Brazil", "Chile", "Colombia", 
+"Ecuador",  "Paraguay", "Peru", 
+"Uruguay", "Venezuela (Bolivarian Republic of)")
+  ] %>% 
+  melt(., id.vars = c('country_code'  ,   'name')) 
+
+dte0 <- dte0Fproj %>%
+  setnames(., c('variable', 'value', 'name'), c('Periodo', 'e0', 'Pais') ) %>%
+  .[Periodo %in% c("2020-2025", "2025-2030", "2030-2035", 
+ "2035-2040", "2040-2045", "2045-2050")] %>%
+  dcast(., Pais ~ Periodo , value.var = 'e0')  %>%
+  setnames(., c('Pais'), c( 'País') ) 
+
+datatable(dte0, rownames = FALSE, 
+          options = list(  pageLength = 6, autoWidth = TRUE)   )
+
+
+
+```
+
+## Tasas específicas de fecundidad
+
+```{r gr4, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 9, fig.height = 4,cache = TRUE}
+library(data.table)
+library(tidyverse)
+library(ggthemes)
+library(viridis)
+library(plotly)
+library(rdhs) 
+
+indicators <- dhs_indicators()
+pr1R <- data.table(unique(indicators$Label))
+
+dhsa <- dhs_data(indicatorIds = c( "FE_FRTR_W_A15", "FE_FRTR_W_A20", "FE_FRTR_W_A25", 
+"FE_FRTR_W_A30", "FE_FRTR_W_A35", "FE_FRTR_W_A40", "FE_FRTR_W_A45"
+) , breakdown = "national", surveyYearStart = 1986  ) 
+
+dhsb <- dhsa %>% setDT(.) %>% 
+  .[CountryName %in% c('Colombia'),
+    c("SurveyYearLabel",  "IndicatorId", 'Indicator', 'Value')] %>%
+  .[, Age := factor(IndicatorId,
+                    levels = c("FE_FRTR_W_A15", "FE_FRTR_W_A20",
+                               "FE_FRTR_W_A25", "FE_FRTR_W_A30", 
+"FE_FRTR_W_A35", "FE_FRTR_W_A40", "FE_FRTR_W_A45"), 
+labels = c("15-19", "20-24", "25-29", "30-34", 
+"35-39", "40-44", "45-49") ) ] 
+
+
+tx <- highlight_key(dhsb, ~SurveyYearLabel)
+# initiate a plotly object
+base <- plot_ly(tx, color = I("black")) %>%
+group_by(SurveyYearLabel) %>%
+add_lines(x = ~Age, y = ~Value)
+
+tx2 <- highlight_key(dhsb, ~SurveyYearLabel, "Seleccionar año(s)")
+gg <- ggplot(tx2) + geom_line(aes(Age, Value , colour = SurveyYearLabel, group = SurveyYearLabel)) + theme_light() + xlab('Edad') + ylab('ASFR') +
+  scale_colour_manual(name = 'Año', values = viridis(7, option = "B"))
+
+ highlight( ggplotly(gg, tooltip = c('Age', 'Value')),
+selectize = TRUE, persistent = TRUE
+)
+```
+
+## Edad mediana al primer nacimiento. Mujeres entre 45 y 49
+
+```{r grg, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 10, fig.height = 5,cache = TRUE}
+library(data.table)
+library(tidyverse)
+library(ggthemes)
+library(viridis)
+library(plotly)
+library(rdhs) 
+
+indicators <- dhs_indicators()
+pr1R <- data.table(unique(indicators$Label))
+
+dhsa <- dhs_data(countryIds="CO", indicatorIds = c( "FE_AAFB_W_M45"
+) , breakdown = "background", surveyYearStart = 2005 ) 
+
+dhsb <- dhsa %>% setDT(.) %>% 
+  .[CountryName %in% c('Colombia'),
+    c("SurveyYearLabel",  "IndicatorId", 'Indicator', 'Value', 'CharacteristicCategory', 'CharacteristicLabel' )] %>%
+  .[CharacteristicLabel %in% c("Urban", "Rural", "No education", "Primary", "Secondary", "Higher", 
+"Lowest", "Second", 
+"Middle", "Fourth", "Highest")] %>%
+  .[, CharacteristicLabel := factor(CharacteristicLabel, c("Urban", "Rural", "No education", "Primary", "Secondary", "Higher", 
+ "Lowest", "Second", 
+"Middle", "Fourth", "Highest"))]
+
+
+p <-  ggplot(dhsb) + geom_point(aes(Value, CharacteristicLabel,
+                                colour = CharacteristicCategory) ) +
+  facet_wrap(~ SurveyYearLabel) + theme_light() +
+  scale_colour_brewer(name = '', palette = 'Set1' ) +
+  xlab('') + ylab('')
+
+ggplotly(p)
+
+```
+
+
+
+## Mujeres que nunca han estado unidas por edad
+
+```{r grfg, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 8, fig.height = 5,cache = TRUE}
+library(data.table)
+library(tidyverse)
+library(ggthemes)
+library(viridis)
+library(plotly)
+library(rdhs) 
+
+indicators <- dhs_indicators()
+pr1R <- data.table(unique(indicators$Label))
+
+dhsa <- dhs_data(countryIds="CO", indicatorIds = c( "MA_MSTA_W_NMA"
+) , breakdown = "background", surveyYearStart = 1990 ) 
+
+dhsb <- dhsa %>% setDT(.) %>% 
+  .[CountryName %in% c('Colombia'),
+    c("SurveyYearLabel",  "IndicatorId", 'Indicator', 'Value', 'CharacteristicCategory', 'CharacteristicLabel' )] %>%
+  .[CharacteristicCategory %in% c("Age (5-year groups)")] %>%
+  .[, CharacteristicLabel := factor(CharacteristicLabel)]
+
+
+p <-  
+  ggplot(dhsb, aes(  CharacteristicLabel,SurveyYearLabel, fill= Value)) + 
+  geom_tile() + theme_light() +
+  scale_fill_viridis(name = 'Porcentaje', option = "A" ) +
+  xlab('') + ylab('')
+
+ggplotly(p)
+
+```
+
+
+## Urbanización en 1993, 2005 y 2018
+
+```{r spg,  echo=FALSE, message=FALSE, warning=FALSE, fig.width = 10, fig.height = 5,cache = TRUE}
+library(data.table); library(tidyverse); library(ggthemes)
+library(viridis); library(plotly)
+
+bd <- fread('pob_cens_mun_tot_hm_cabres_vivhog_15042020.csv', encoding = 'UTF-8') %>%
+  .[, .(CODIGO_area, Area, Anio, Poblacion, Urbano)] %>%
+  .[Area %in% c("COLOMBIA", "ANTIOQUIA", "ATLÁNTICO", "BOLÍVAR", "BOYACÁ", 
+"CALDAS", "CAUCA", "CESAR", "CÓRDOBA", "CUNDINAMARCA", "CHOCÓ", 
+"HUILA", "LA GUAJIRA", "MAGDALENA", "META", "NARIÑO", "NORTE DE SANTANDER", 
+"QUINDÍO", "RISARALDA", "SANTANDER", "SUCRE", "TOLIMA", "VALLE DEL CAUCA", 
+"AMAZONAS", "ARAUCA", "CAQUETÁ", "PUTUMAYO", "VAUPÉS", "VICHADA") & 
+  Anio %in% 1993:2018 & CODIGO_area %in% 0:99] %>%
+  .[, pct_urb := round(as.numeric(Urbano) * 100 / Poblacion, 2)  ] %>%
+  dcast(., Area ~ Anio, value.var = 'pct_urb', sum )  %>%
+  na.omit(.) %>%
+  setnames(., c("1993", "2005", "2018"), c("a1993", "a2005", "a2018"))
+
+fig <- bd %>% plot_ly() %>%
+  add_trace(  type = 'splom',
+    dimensions = list( 
+      list(label='1993', values=~a1993), list(label='2005', values=~a2005),
+      list(label='2018', values=~a2018)
+    ),
+    text=~Area,   
+    marker = list(   size = 7, color = 'black',
+      line = list(  width = 1, color = 'black'    )  )    ) 
+
+fig %>% style(showupperhalf = F, diagonal = list(visible = F)) %>%
+  layout(hovermode='closest', dragmode= 'select',
+    plot_bgcolor='rgba(240,240,240, 0.95)')
+```
+
+
+
+## Estructura poblacional en tres grandes grupos
+
+```{r dt, echo=FALSE, message=FALSE, warning=FALSE, fig.width = 10, fig.height = 5,cache = TRUE}
+library(data.table); library(tidyverse); library(ggthemes)
+library(viridis); library(plotly)
+
+bd <- fread('pob_sex_eds_mun_anio.csv', encoding = 'UTF-8') %>%
+  .[, h := as.numeric(h)] %>% .[,m := as.numeric(m)] %>%
+  .[ , edad3gr := cut(edad, breaks = c(0, 15, 60, 122), right = FALSE,  
+                      labels = c('e0a14', 'e15a59', 'e60omas') )] %>%
+  .[ area %in% c("Medellín", 'Bogotá, D.C.', 'Cali', 'Barranquilla', 
+                 'Cartagena', 'Cúcuta', 'Ibagué') &
+       anio %in% 1973:2020 ] %>%
+  .[, .(ht = sum(h, na.rm = TRUE), mt = sum(m, na.rm = TRUE))  , 
+    keyby = .(anio, area, edad3gr)] %>%
+  .[, tot := ht + mt ] %>%
+  .[, pct := round(tot * 100 / sum(tot, na.rm = TRUE), 2), keyby = .(anio, area) ] %>%
+  dcast(., anio + area ~ edad3gr, value.var='pct' ) %>%
+  .[, anio:= factor(anio)]
+
+
+fig <- bd %>% plot_ly()  %>% add_trace(
+    type = 'scatterternary', mode = 'markers',
+    a = ~e0a14, b = ~e15a59, c = ~e60omas,
+    text = ~area, color = ~anio,
+    marker = list( symbol = 100, size = 7, 
+                   line = list('width' = 2)   )  ) %>% 
+  layout(  title = "",  ternary = list( aaxis=list(title="0 a 14"),
+    baxis = list(title="15 a 64"),
+    caxis = list(title="65+")   )  )
+
+fig
+```
+
+## El código tras la diapositiva
+
+```{r cdgdia1, eval=FALSE, echo=TRUE}
+library(data.table); library(tidyverse); library(ggthemes)
+library(viridis); library(plotly)
+
+bd <- fread('pob_sex_eds_mun_anio.csv', encoding = 'UTF-8') %>%
+  .[, h := as.numeric(h)] %>% .[,m := as.numeric(m)] %>%
+  .[ , edad3gr := cut(edad, breaks = c(0, 15, 60, 122), right = FALSE,  
+                      labels = c('e0a14', 'e15a59', 'e60omas') )] %>%
+  .[ area %in% c("Medellín", 'Bogotá, D.C.', 'Cali', 'Barranquilla', 
+                 'Cartagena', 'Cúcuta', 'Ibagué') &
+       anio %in% 1973:2020 ] %>%
+  .[, .(ht = sum(h, na.rm = TRUE), mt = sum(m, na.rm = TRUE))  , 
+    keyby = .(anio, area, edad3gr)] %>%
+  .[, tot := ht + mt ] %>%
+  .[, pct := round(tot * 100 / sum(tot, na.rm = TRUE), 2), keyby = .(anio, area) ] %>%
+  dcast(., anio + area ~ edad3gr, value.var='pct' ) %>%
+  .[, anio:= factor(anio)]
+```
+
+## El código tras la diapositiva
+
+```{r cdgdia2, eval=FALSE, echo=TRUE}
+fig <- bd %>% plot_ly()  %>% add_trace(
+    type = 'scatterternary', mode = 'markers',
+    a = ~e0a14, b = ~e15a59, c = ~e60omas,
+    text = ~area, color = ~anio,
+    marker = list( symbol = 100, size = 7, 
+                   line = list('width' = 2)   )  ) %>% 
+  layout(  title = "",  ternary = list( aaxis=list(title="0 a 14"),
+    baxis = list(title="15 a 64"),
+    caxis = list(title="65+")   )  )
+
+fig
+```
+## Población en los municipios de Colombia
+
+```{r maps1,  echo=FALSE, message=FALSE, warning=FALSE, fig.width = 10, fig.height = 5.1,cache = TRUE}
+library(data.table); library(tidyverse); library(ggthemes)
+library(viridis); library(plotly); library(mapproj)
+library(rgdal)
+
+colm <- readOGR("MGN_MPIO_POLITICO.shp",  layer = "MGN_MPIO_POLITICO", 
+                verbose = FALSE, stringsAsFactors = FALSE) 
+pds <- fortify(colm, region = 'MPIO_CCNCT')
+
+bdb <- fread('pob_cens_mun_tot_hm_cabres_vivhog_15042020.csv', 
+             encoding = 'UTF-8') %>%
+  .[Anio == 2018 & CODIGO_area > 5000] %>%
+  .[, .(h = as.numeric(Hombres), m = as.numeric(Mujeres) ), 
+    keyby = .(CODIGO_area, Area) ] 
+
+col_cities <- setDT(pds)  %>%
+  .[, CODIGO_area := as.numeric(id)] %>% 
+  .[, .(lon = mean(long), lat = mean(lat)), keyby = .(CODIGO_area)]  %>%
+  merge.data.table(., bdb, by = 'CODIGO_area')  %>%
+  na.omit() %>%
+  .[, pob := h + m ]
+
+
+fig <- col_cities %>%
+  plot_ly(    lat = ~lat,    lon = ~lon,  
+              text = paste0(col_cities$Area,'<br>Población: ', col_cities$pob),
+    marker = list( size = sqrt(col_cities$pob/10000) + 1, 
+                   color = "fuchsia", opacity = 0.5),
+    type = 'scattermapbox')  %>%
+  layout(    mapbox = list(
+      style = 'open-street-map',  zoom = 3.8 , 
+      center = list(lon = -75, lat = 5.5))) 
+
+fig
+```
+
+## Visualizaciones en 3D. Videos en formato mp4 en Rmarkdown
+
+```{r vid,  echo=FALSE, message=FALSE, warning=FALSE, cache = TRUE}
+video_files <- list.files(getwd(),
+                         pattern = "\\.mp4$",
+                         recursive = TRUE,
+                         all.files = FALSE,
+                         full.names = TRUE)
+```
+
+<iframe width="720" height="480" src="`r video_files[1]`" align="middle" frameborder="0" allowfullscreen></iframe>
+
+# A modo de conclusión{data-background=#243445}
+
+## Usos potenciales del R Markdown (Wickham, 2017) 
+Los archivos R Markdown están diseñados para ser usados de varias maneras:
+
+- Para **comunicarse** con quienes toman decisiones, que desean enfocarse en las conclusiones, no en el código que subyace al análisis.
+
+- Para **colaborar** con otras personas que hacen ciencia de datos (¡incluyendo a tu yo futuro!), quienes están interesados tanto en tus conclusiones como en el modo en el que llegaste a ellas (es decir, el código).
+
+- Como un ambiente en el cual **hacer ciencia de datos**, como si fuera un notebook de laboratorio moderno donde puedes capturar no solo que hiciste, sino también lo que estabas pensando cuando lo hacías.
+
+- Para documentos, las unidades básicas son las secciones. Para presentaciones, **las unidades básicas son las diapositivas** (Xie, 2018). 
+
+## I Congreso Asociación Colombiana de Demografía, Población y Desarrollo POPULORUM
+
+
+<div style="float: left; width: 30%;">
+![](populorum1.png){width="85%"}
+</div>
+
+<div style="float: right; width: 70%;">
+**La dinámica demográfica colombiana:**<br>
+Estado Actual y desafíos que impone la pandemia.<br>
+**Modalidad virtual:**<br>
+25, 26 y 27 de noviembre de 2021.<br>
+**Fecha límite para resúmenes cortos (500 palabras):**<br>
+16 de julio de 2021.<br>
+**Mayor información: **<br>
+asociacion.populorum@gmail.com <br>
+</div>
+<div style="float: left; width: 90%; font-size:22px;"> 
+**Temas:** Mortalidad; Fecundidad; Migración; Envejecimiento; Género; Nupcialidad y familia; Demografía económica; Población, educación y fuerza laboral; Demografía y territorio; Materiales y métodos de análisis demográfico; Pueblos étnicos;  Políticas públicas con perspectiva demográfica; Poblaciones diferenciales; Demografía histórica; Demografía y medio ambiente. 
+</div>
+
